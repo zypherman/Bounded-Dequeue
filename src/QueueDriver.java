@@ -1,11 +1,11 @@
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.FileHandler;
 
 /**
  * Driver class requirements
@@ -27,12 +27,12 @@ public class QueueDriver {
     //Optional Arguments pass them as vm options
     static int numberEnq;   // -DnumberEnq = 1
     static int numberDeq;   // -DnumberDeq = 1
+    static int numberPull;  // -DnumberPull = 1
     static int queueSize;   // -DqueueSize = 1
-    static int maxTime;     // -DmaxTime = 1 in mins
+    static int maxTime;     // -DmaxTime = 2 in mins
     static boolean dequeue; // -Ddequeue = true
 
     static LinkedBlockingQueue<String> log;
-    static FileHandler handler;
     static Instant startTime;
 
     /**
@@ -56,17 +56,17 @@ public class QueueDriver {
      */
     public static void parseCommandLineOptions() {
         try {
-            numberEnq = Integer.valueOf(System.getProperty("numberEnq", "1"));
-            numberDeq = Integer.valueOf(System.getProperty("numberDeq", "1"));
+            numberEnq = Integer.valueOf(System.getProperty("numberEnq", "15"));
+            numberDeq = Integer.valueOf(System.getProperty("numberDeq", "5"));
+            numberPull = Integer.valueOf(System.getProperty("numberPull", "5"));
             queueSize = Integer.valueOf(System.getProperty("queueSize", "25"));
-            maxTime = Integer.valueOf(System.getProperty("maxTime", "100"));
-            dequeue = Boolean.valueOf(System.getProperty("maxTime", "100"));
+            maxTime = Integer.valueOf(System.getProperty("maxTime", "1"));
+            dequeue = Boolean.valueOf(System.getProperty("dequeue", "false"));
+
         } catch (NumberFormatException e) {
             System.out.println("Please enter an integer formatted correctly");
         }
     }
-
-    static int counter = 0;
 
     /**
      * Checks if the time elapsed as surpassed the max time given
@@ -74,8 +74,7 @@ public class QueueDriver {
      * @return boolean time
      */
     public static boolean checkTime() {
-        return counter++ > maxTime;
-//        return Duration.between(startTime, Instant.now()).toMinutes() > maxTime;
+        return Duration.between(startTime, Instant.now()).toMinutes() > maxTime;
     }
 
     public static void main(String[] args) {
@@ -83,28 +82,39 @@ public class QueueDriver {
         parseCommandLineOptions();
         configureLogger();
 
-        List<QueueThread> runningThreads = new ArrayList<QueueThread>();
+        List<Thread> runningThreads = new ArrayList<Thread>();
         BoundedQueue boundedQueue = new BoundedQueue(queueSize);
         BoundedDequeue boundedDequeue = new BoundedDequeue(queueSize);
+        log = new LinkedBlockingQueue<String>();
         startTime = Instant.now();
 
         try {
             //Start fileIO thread give it the log and turn on console
             Thread fileIO = new Thread(new FileIO(log, true, maxTime));
             fileIO.start();
+            runningThreads.add(fileIO);
 
             //Create all the enq threads
             for (int i = 0; i < numberEnq; i++) {
-                QueueThread thread = dequeue ? new EnqThread(boundedDequeue, log) : new EnqThread(boundedQueue, log);
+                Thread thread = dequeue ? new Thread(new EnqThread(boundedDequeue, log)) : new Thread(new EnqThread(boundedQueue, log));
                 thread.start();
                 runningThreads.add(thread);
             }
 
             //Create all the deq threads
             for (int i = 0; i < numberDeq; i++) {
-                QueueThread thread = dequeue ? new DeqThread(boundedDequeue, log) : new DeqThread(boundedQueue, log);
+                Thread thread = dequeue ? new Thread(new DeqThread(boundedDequeue, log)) : new Thread(new DeqThread(boundedQueue, log));
                 thread.start();
                 runningThreads.add(thread);
+            }
+
+            if (dequeue) {
+                //Create all the push threads
+                for (int i = 0; i < numberDeq; i++) {
+                    Thread thread = new Thread(new PushThread(boundedDequeue, log));
+                    thread.start();
+                    runningThreads.add(thread);
+                }
             }
 
             //Check for elapsed time
@@ -113,16 +123,13 @@ public class QueueDriver {
             }
 
             // Tell all threads that time is up
-            for (QueueThread thread : runningThreads) {
+            //Fine with interrupt because if they are waiting then they will be waiting forever anyways
+            for (Thread thread : runningThreads) {
                 thread.interrupt();
             }
 
-
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            handler.close();
         }
-
     }
 }

@@ -11,21 +11,21 @@ public class PushThread extends QueueThread {
     @SuppressWarnings("unchecked") //Live life dangerously
     public void run() {
 
-        while (run) {
-            // Create element to enq and make random
-            int element = 16;
+        while (!Thread.currentThread().isInterrupted()) {
+            // Create new element from random number
+            int element = randomService.getRandom();
             try {
                 //Enq on queue
                 boundedDequeue.push(element);
 
                 //Output Req Both to console and to file
-                log.add("Thread " + getName() +
+                log.add("Thread " + Thread.currentThread().getName() +
                         " pushed an item " + element +
                         " at time " + Instant.now().toString());
 
-                Thread.sleep(1000); //TODO Change to random interval
-            } catch (Exception e) {
-                e.printStackTrace();
+                Thread.sleep(randomService.getRandom());
+            } catch (InterruptedException e) {
+                //Ignore
             }
         }
 

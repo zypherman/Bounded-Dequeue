@@ -3,6 +3,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class BoundedQueue<T> {
+
     ReentrantLock enqLock, deqLock;
     //notEmpty goes on the deque lock to ensure you dont remove from an empty queue
     //notFull goes on enq to stop from adding to full queue
@@ -45,6 +46,7 @@ public class BoundedQueue<T> {
             while (size.get() == capacity) {
                 notFullCondition.await();
             }
+
             //Declare new node we are going to add to the queue and give it the generic T object we are adding
             Node e = new Node(x);
             tail.next = e; //Set the current tails next node to be the node we add

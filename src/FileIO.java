@@ -15,7 +15,7 @@ public class FileIO implements Runnable {
     String outputFileName = "output.txt";
     private boolean consoleNoise;
     private Instant startTime;
-    long logInterval = 500;
+    long logInterval = 50;
     //System independent new line character
     String newLineChar = System.getProperty("line.separator");
     private LinkedBlockingQueue<String> log;
@@ -25,14 +25,16 @@ public class FileIO implements Runnable {
         this.log = log;
         this.startTime = Instant.now();
         this.consoleNoise = consoleNoise;
+        this.runtime = runtime;
     }
 
     /**
      * Will check if there is enough data to write to the file
      * If we have more than 5 things to write then write the whole log to disk
+     * Also if its the end then do one last write
      */
-    private void checkLog() throws InterruptedException {
-        if (log.size() > 5) ingestLog();
+    private void checkLog(boolean end) throws InterruptedException {
+        if (log.size() > 5 || end) ingestLog();
     }
 
     /**
@@ -40,13 +42,17 @@ public class FileIO implements Runnable {
      */
     private void ingestLog() throws InterruptedException {
         Queue<String> logs = new ArrayBlockingQueue<String>(10, true);
+        int count = 0;
 
-        for (int i = 0; i < 5; i++) {
+        //While there are logs to read and we havent read more than 20
+        while(!log.isEmpty() || count > 20 ) {
 
             if (consoleNoise) {
                 System.out.println(log.peek());
             }
+
             logs.add(log.take());
+            count++;
         }
         saveDataToFile(logs);
     }
@@ -96,13 +102,15 @@ public class FileIO implements Runnable {
     @Override
     public void run() {
         try {
-            while (checkTime()) {
+            while (!checkTime()) {
                 //Determines how often we check for new writes
                 Thread.sleep(logInterval);
-                checkLog();
+                checkLog(false);
             }
+            log.add("End of program *******************");
+            checkLog(true);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            //Ignore
         }
     }
 

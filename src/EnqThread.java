@@ -15,19 +15,19 @@ public class EnqThread extends QueueThread {
     @SuppressWarnings("unchecked") //Live life dangerously
     public void run() {
 
-        while (run) {
+        while (!Thread.currentThread().isInterrupted()) {
             // Create element to enq and make random
-            int element = 16;
+            int element = randomService.getRandom();
             try {
                 //Enq on queue
                 boundedQueue.enq(element);
 
                 //Output Req Both to console and to file
-                log.add("Thread " + getName() +
+                log.add("Thread " + Thread.currentThread().getName() +
                         " enqueued an item " + element +
                         " at time " + Instant.now().toString());
 
-                Thread.sleep(1000); //TODO Change to random interval
+                Thread.sleep(randomService.getRandom());
             } catch (InterruptedException e) {
                 //Ignore
             }

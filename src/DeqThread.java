@@ -14,21 +14,19 @@ public class DeqThread extends QueueThread {
     @Override
     public void run() {
 
-        while (run) {
-            // Create element to enq turn into something more random
-            int element = 11;
+        while (!Thread.currentThread().isInterrupted()) {
             try {
                 // Wait time will be the value of the deq
                 int waitTime = (Integer) boundedQueue.deq();
 
                 //Output Req Both to console and to file
-                log.add("Thread " + getName() +
-                        " enqueued an item " + element +
+                log.add("Thread " + Thread.currentThread().getName() +
+                        " dequeued an item " + waitTime +
                         " at time " + Instant.now().toString());
 
                 Thread.sleep(waitTime);
             } catch (InterruptedException e) {
-                //Ignore
+                //we want to be let this do its thing
             }
         }
     }

@@ -1,4 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE log SYSTEM "logger.dtd">
 <log>
+<record>
+  <date>2015-12-05T20:47:37</date>
+  <millis>1449370057848</millis>
+  <sequence>1</sequence>
+  <logger>Log</logger>
+  <level>ALL</level>
+  <class>QueueDriver</class>
+  <method>main</method>
+  <thread>1</thread>
+  <message>log this</message>
+</record>
 </log>

@@ -1,6 +1,5 @@
 import java.io.BufferedWriter;
 import java.io.FileWriter;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -19,13 +18,13 @@ public class FileIO implements Runnable {
     //System independent new line character
     String newLineChar = System.getProperty("line.separator");
     private LinkedBlockingQueue<String> log;
-    int runtime;
+    boolean stop;
 
-    public FileIO(LinkedBlockingQueue<String> log, boolean consoleNoise, int runtime) {
+    public FileIO(LinkedBlockingQueue<String> log, boolean consoleNoise) {
         this.log = log;
         this.startTime = Instant.now();
         this.consoleNoise = consoleNoise;
-        this.runtime = runtime;
+        stop = true;
     }
 
     /**
@@ -54,16 +53,8 @@ public class FileIO implements Runnable {
         saveDataToFile(logs);
     }
 
-    /**
-     * Check to see if time is up
-     * Also checks that if it is that orders are also empty
-     * Uses the distance and instant classes
-     * If time is up then stop all the growing threads
-     *
-     * @return boolean
-     */
-    private boolean checkTime() {
-        return ((Duration.between(startTime, Instant.now()).toMinutes() > runtime) && log.isEmpty());
+    public void stopRun() {
+        stop = false;
     }
 
     /**
@@ -97,7 +88,7 @@ public class FileIO implements Runnable {
     @Override
     public void run() {
         try {
-            while (!checkTime()) {
+            while (!Thread.currentThread().isInterrupted()) {
                 //Determines how often we check for new writes
                 Thread.sleep(logInterval);
                 checkLog(false);
@@ -105,7 +96,6 @@ public class FileIO implements Runnable {
             log.add("End of program *******************");
             checkLog(true);
         } catch (InterruptedException e) {
-            //Ignore
         }
     }
 

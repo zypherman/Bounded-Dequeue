@@ -1,7 +1,6 @@
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -75,8 +74,8 @@ public class QueueDriver {
      * @return boolean time
      */
     public static boolean checkTime() {
-//        return testCounter++ < 5000;
-        return Duration.between(startTime, Instant.now()).toMinutes() > maxTime;
+        return testCounter++ > 5000;
+//        return Duration.between(startTime, Instant.now()).toMinutes() > maxTime;
     }
 
     public static void main(String[] args) {
@@ -92,9 +91,8 @@ public class QueueDriver {
 
         try {
             //Start fileIO thread give it the log and turn on console
-            Thread fileIO = new Thread(new FileIO(log, true, maxTime));
-            fileIO.start();
-            runningThreads.add(fileIO);
+            Thread fileIOThread = new Thread(new FileIO(log, true));
+            fileIOThread.start();
 
             //Create all the enq threads
             for (int i = 0; i < numberEnq; i++) {
@@ -124,15 +122,21 @@ public class QueueDriver {
                 //Spin while we wait for max time to be reached
             }
 
+            for (Thread thread : runningThreads) {
+                thread.join();
+            }
+
             // Tell all threads that time is up
             //Fine with interrupt because if they are waiting then they will be waiting forever anyways
             for (Thread thread : runningThreads) {
-                thread.join();
                 thread.interrupt();
             }
+
+            fileIOThread.interrupt();
 
         } catch (Exception e) {
             e.printStackTrace();
         }
+
     }
 }

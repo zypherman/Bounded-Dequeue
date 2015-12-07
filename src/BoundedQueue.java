@@ -117,6 +117,8 @@ public class BoundedQueue<T> {
             //If we previously had a full queue then we need to alert the enquers
             if (size.getAndDecrement() == capacity) {
                 mustWakeEnqueuers = true;
+                // If there is anyone waiting for this then notifyThem
+                if (deqLock.hasWaiters(pushNotFullCondition)) pushNotFullCondition.signalAll();
             }
 
 //            log.add(printQueue());
@@ -131,9 +133,6 @@ public class BoundedQueue<T> {
             enqLock.lock();
             try {
                 notFullCondition.signalAll();
-
-                // If there is anyone waiting for this then notifyThem
-                if (deqLock.hasWaiters(pushNotFullCondition)) pushNotFullCondition.signalAll();
             } finally {
                 enqLock.unlock();
             }

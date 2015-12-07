@@ -27,13 +27,14 @@ public class QueueDriver {
     //Optional Arguments pass them as vm options
     static int numberEnq;   // -DnumberEnq = 1
     static int numberDeq;   // -DnumberDeq = 1
-    static int numberPull;  // -DnumberPull = 1
+    static int numberPush;  // -DnumberPull = 1
     static int queueSize;   // -DqueueSize = 1
     static int maxTime;     // -DmaxTime = 2 in mins
     static boolean dequeue; // -Ddequeue = true
 
     static LinkedBlockingQueue<String> log;
     static Instant startTime;
+    static int testCounter = 0;
 
     /**
      * Configure our logger for the program
@@ -56,10 +57,10 @@ public class QueueDriver {
      */
     public static void parseCommandLineOptions() {
         try {
-            numberEnq = Integer.valueOf(System.getProperty("numberEnq", "5"));
+            numberEnq = Integer.valueOf(System.getProperty("numberEnq", "1"));
             numberDeq = Integer.valueOf(System.getProperty("numberDeq", "15"));
-            numberPull = Integer.valueOf(System.getProperty("numberPull", "5"));
-            queueSize = Integer.valueOf(System.getProperty("queueSize", "25"));
+            numberPush = Integer.valueOf(System.getProperty("numberPush", "10"));
+            queueSize = Integer.valueOf(System.getProperty("queueSize", "15"));
             maxTime = Integer.valueOf(System.getProperty("maxTime", "1"));
             dequeue = Boolean.valueOf(System.getProperty("dequeue", "true"));
 
@@ -74,6 +75,7 @@ public class QueueDriver {
      * @return boolean time
      */
     public static boolean checkTime() {
+//        return testCounter++ < 5000;
         return Duration.between(startTime, Instant.now()).toMinutes() > maxTime;
     }
 
@@ -125,6 +127,7 @@ public class QueueDriver {
             // Tell all threads that time is up
             //Fine with interrupt because if they are waiting then they will be waiting forever anyways
             for (Thread thread : runningThreads) {
+                thread.join();
                 thread.interrupt();
             }
 

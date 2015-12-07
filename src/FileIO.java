@@ -41,7 +41,7 @@ public class FileIO implements Runnable {
      * Will take all items from the log queue and send them to get written to disk
      */
     private void ingestLog() throws InterruptedException {
-        Queue<String> logs = new ArrayBlockingQueue<String>(10, true);
+        Queue<String> logs = new ArrayBlockingQueue<String>(50, true);
         int count = 0;
 
         //While there are logs to read and we havent read more than 20

@@ -56,12 +56,12 @@ public class QueueDriver {
      */
     public static void parseCommandLineOptions() {
         try {
-            numberEnq = Integer.valueOf(System.getProperty("numberEnq", "15"));
-            numberDeq = Integer.valueOf(System.getProperty("numberDeq", "5"));
+            numberEnq = Integer.valueOf(System.getProperty("numberEnq", "5"));
+            numberDeq = Integer.valueOf(System.getProperty("numberDeq", "15"));
             numberPull = Integer.valueOf(System.getProperty("numberPull", "5"));
             queueSize = Integer.valueOf(System.getProperty("queueSize", "25"));
             maxTime = Integer.valueOf(System.getProperty("maxTime", "1"));
-            dequeue = Boolean.valueOf(System.getProperty("dequeue", "false"));
+            dequeue = Boolean.valueOf(System.getProperty("dequeue", "true"));
 
         } catch (NumberFormatException e) {
             System.out.println("Please enter an integer formatted correctly");
@@ -83,8 +83,8 @@ public class QueueDriver {
         configureLogger();
 
         List<Thread> runningThreads = new ArrayList<Thread>();
-        BoundedQueue boundedQueue = new BoundedQueue(queueSize);
-        BoundedDequeue boundedDequeue = new BoundedDequeue(queueSize);
+        BoundedQueue boundedQueue = new BoundedQueue(queueSize, log);
+        BoundedDequeue boundedDequeue = new BoundedDequeue(queueSize, log);
         log = new LinkedBlockingQueue<String>();
         startTime = Instant.now();
 

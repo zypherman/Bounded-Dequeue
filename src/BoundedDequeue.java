@@ -1,3 +1,5 @@
+import java.util.concurrent.LinkedBlockingQueue;
+
 /**
  * Bounded DeQueue is a subclass of the Bounded Queue Class
  * <p/>
@@ -7,24 +9,34 @@
 public class BoundedDequeue<T> extends BoundedQueue {
 
 
-    public BoundedDequeue(int capacity) {
-        super(capacity);
+    public BoundedDequeue(int capacity, LinkedBlockingQueue<String> log) {
+        super(capacity, log);
     }
 
     /**
      * Push element to the head of the queue
+     *
+     * Added a pushNotFullCondition to ensure that there was a waiting queue for push threads
      *
      * @param x T generic
      */
     @SuppressWarnings("unchecked")
     public void push(T x) {
         boolean mustWakeDequeuers = false;
-        deqLock.lock();                 // Obtain the deq lock since we are trying to work on the head node
+        deqLock.lock(); // Obtain the deq lock since we are trying to work on the head node
+
         try {
             //Check if the queue is full before we add an element,
-            // if it is then we wait for the condition to be resolved
             while (size.get() == capacity) {
-                notFullCondition.await();
+                pushNotFullCondition.await(); //Wait for the buffer to have open space
+
+//                We could do some hot garbage that looks like this but yuck
+//                Because the notFullCondition is on the enq lock and we need to work with the deq Lock
+
+//                deqLock.unlock();
+//                enqLock.lock();
+//                notFullCondition.await();
+//                deqLock.lock();
             }
 
             Node newNode = new Node(x); // Create new node
@@ -35,6 +47,8 @@ public class BoundedDequeue<T> extends BoundedQueue {
             if (size.getAndIncrement() == 0) {
                 mustWakeDequeuers = true;
             }
+
+//            log.add(printQueue());
         } catch (InterruptedException ie) {
             System.out.println("push(): Interrupted Exception");
         } finally {

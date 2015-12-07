@@ -1,3 +1,4 @@
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -5,9 +6,11 @@ import java.util.concurrent.locks.ReentrantLock;
 public class BoundedQueue<T> {
 
     ReentrantLock enqLock, deqLock;
+    LinkedBlockingQueue<String> log;
     //notEmpty goes on the deque lock to ensure you dont remove from an empty queue
     //notFull goes on enq to stop from adding to full queue
-    Condition notEmptyCondition, notFullCondition;
+    //pullNotFull is there to help when you need to element on stack but its full
+    Condition notEmptyCondition, notFullCondition, pushNotFullCondition;
     AtomicInteger size;
     volatile Node head, tail;
     int capacity;
@@ -19,7 +22,7 @@ public class BoundedQueue<T> {
      *
      * @param _capacity int
      */
-    public BoundedQueue(int _capacity) {
+    public BoundedQueue(int _capacity, LinkedBlockingQueue<String> log) {
         capacity = _capacity;
         head = new Node(null);
         tail = head;
@@ -28,6 +31,18 @@ public class BoundedQueue<T> {
         notFullCondition = enqLock.newCondition();
         deqLock = new ReentrantLock();
         notEmptyCondition = deqLock.newCondition();
+        pushNotFullCondition = deqLock.newCondition();
+        this.log = log;
+    }
+
+    public String printQueue() {
+        Node node = head != null ? head : tail;
+        String returnString = " ";
+        while (node.next != null) {
+            returnString += node.value != null ? node.value : " ";
+            node = node.next;
+        }
+        return returnString;
     }
 
 
@@ -57,6 +72,7 @@ public class BoundedQueue<T> {
                 mustWakeDequeuers = true;
             }
 
+//            log.add(printQueue());
         } catch (InterruptedException ie) {
             System.out.println("enq(): Interrupted Exception");
         } finally {
@@ -103,6 +119,7 @@ public class BoundedQueue<T> {
                 mustWakeEnqueuers = true;
             }
 
+//            log.add(printQueue());
         } catch (InterruptedException ie) {
             System.out.println("enq(): Interrupted Exception");
         } finally {
@@ -114,6 +131,9 @@ public class BoundedQueue<T> {
             enqLock.lock();
             try {
                 notFullCondition.signalAll();
+
+                // If there is anyone waiting for this then notifyThem
+                if (deqLock.hasWaiters(pushNotFullCondition)) pushNotFullCondition.signalAll();
             } finally {
                 enqLock.unlock();
             }

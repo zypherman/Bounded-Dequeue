@@ -17,6 +17,7 @@ public class QueueThread implements Runnable {
     }
 
     public QueueThread(BoundedDequeue boundedDequeue, LinkedBlockingQueue<String> log) {
+        this.randomService = new RandomService(1000, 100);
         this.boundedDequeue = boundedDequeue;
         this.log = log;
     }

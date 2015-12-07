@@ -26,7 +26,8 @@ public class DeqThread extends QueueThread {
 
                 Thread.sleep(waitTime);
             } catch (InterruptedException e) {
-                //we want to be let this do its thing
+                log.add("Thread " + Thread.currentThread().getName() +
+                        " died at time " + Instant.now().toString());
             }
         }
     }

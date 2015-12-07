@@ -41,19 +41,16 @@ public class FileIO implements Runnable {
      * Will take all items from the log queue and send them to get written to disk
      */
     private void ingestLog() throws InterruptedException {
-        Queue<String> logs = new ArrayBlockingQueue<String>(50, true);
+        ArrayBlockingQueue<String> logs = new ArrayBlockingQueue<String>(50, true);
         int count = 0;
 
-        //While there are logs to read and we havent read more than 20
-        while(!log.isEmpty() || count > 20 ) {
-
-            if (consoleNoise) {
-                System.out.println(log.peek());
-            }
-
+        //While there are logs to read and we haven't read more than 20
+        while(!log.isEmpty() || count < 25) {
+            if (consoleNoise && log.peek() != null) { System.out.println(log.peek()); }
             logs.add(log.take());
             count++;
         }
+
         saveDataToFile(logs);
     }
 
@@ -75,8 +72,6 @@ public class FileIO implements Runnable {
      * @param data data to save, write out
      */
     public void saveDataToFile(Queue<String> data) {
-        int count = 0;
-
         try {
             //Create our file writer object
             FileWriter fileWriter = new FileWriter(outputFileName, true); //Append mode

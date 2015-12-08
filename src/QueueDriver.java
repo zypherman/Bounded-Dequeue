@@ -1,10 +1,12 @@
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Driver class requirements
@@ -57,8 +59,8 @@ public class QueueDriver {
     public static void parseCommandLineOptions() {
         try {
             numberEnq = Integer.valueOf(System.getProperty("numberEnq", "1"));
-            numberDeq = Integer.valueOf(System.getProperty("numberDeq", "15"));
-            numberPush = Integer.valueOf(System.getProperty("numberPush", "10"));
+            numberDeq = Integer.valueOf(System.getProperty("numberDeq", "5"));
+            numberPush = Integer.valueOf(System.getProperty("numberPush", "2"));
             queueSize = Integer.valueOf(System.getProperty("queueSize", "15"));
             maxTime = Integer.valueOf(System.getProperty("maxTime", "1"));
             dequeue = Boolean.valueOf(System.getProperty("dequeue", "true"));
@@ -74,8 +76,7 @@ public class QueueDriver {
      * @return boolean time
      */
     public static boolean checkTime() {
-        return testCounter++ > 5000;
-//        return Duration.between(startTime, Instant.now()).toMinutes() > maxTime;
+        return Duration.between(startTime, Instant.now()).toMillis() > TimeUnit.MINUTES.toMillis(maxTime);
     }
 
     public static void main(String[] args) {
@@ -120,10 +121,6 @@ public class QueueDriver {
             //Check for elapsed time
             while (!checkTime()) {
                 //Spin while we wait for max time to be reached
-            }
-
-            for (Thread thread : runningThreads) {
-                thread.join();
             }
 
             // Tell all threads that time is up

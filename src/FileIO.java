@@ -1,6 +1,5 @@
 import java.io.BufferedWriter;
 import java.io.FileWriter;
-import java.time.Instant;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -10,42 +9,46 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class FileIO implements Runnable {
 
-    //Hold the file
-    String outputFileName = "output.txt";
-    private boolean consoleNoise;
-    private Instant startTime;
-    long logInterval = 50;
-    //System independent new line character
     String newLineChar = System.getProperty("line.separator");
     private LinkedBlockingQueue<String> log;
-    boolean stop;
+    String outputFileName = "output.txt";
+    private boolean consoleNoise;
+    long logInterval = 50;
 
+    /**
+     * FileIO constructor
+     *
+     * @param (LinkedBlockingQueue<String>) log
+     * @param (boolean)                     consoleNoise
+     */
     public FileIO(LinkedBlockingQueue<String> log, boolean consoleNoise) {
         this.log = log;
-        this.startTime = Instant.now();
         this.consoleNoise = consoleNoise;
-        stop = true;
     }
 
     /**
      * Will check if there is enough data to write to the file
      * If we have more than 5 things to write then write the whole log to disk
      * Also if its the end then do one last write
+     *
+     * @param (boolean) end of program
      */
     private void checkLog(boolean end) throws InterruptedException {
         if (log.size() > 5 || end) ingestLog();
     }
 
     /**
-     * Will take all items from the log queue and send them to get written to disk
+     * Will take atleast 25 items from the log queue and send them to get written to disk
      */
     private void ingestLog() throws InterruptedException {
         ArrayBlockingQueue<String> logs = new ArrayBlockingQueue<String>(100, true);
         int count = 0;
 
         //While there are logs to read and we haven't read more than 25
-        while(!log.isEmpty() || count < 25) {
-            if (consoleNoise && log.peek() != null) { System.out.println(log.peek()); }
+        while (!log.isEmpty() || count < 25) {
+            if (consoleNoise && log.peek() != null) {
+                System.out.println(log.peek());
+            }
             logs.add(log.take());
             count++;
         }
@@ -53,14 +56,10 @@ public class FileIO implements Runnable {
         saveDataToFile(logs);
     }
 
-    public void stopRun() {
-        stop = false;
-    }
-
     /**
      * Will handle writing output from out program to a file of our choice
      *
-     * @param data data to save, write out
+     * @param (Queue<String>) data data to save, write out
      */
     public void saveDataToFile(Queue<String> data) {
         try {
@@ -70,7 +69,7 @@ public class FileIO implements Runnable {
 
             //Write data
             while (!data.isEmpty()) {
-                bufferedWriter.write(data.remove() + newLineChar); //Write next Log to the file and adds new line charecter to the end
+                bufferedWriter.write(data.remove() + newLineChar); //Write next Log to the file and adds new line character to the end
             }
             //Close our resources
             bufferedWriter.close();
@@ -93,9 +92,11 @@ public class FileIO implements Runnable {
                 Thread.sleep(logInterval);
                 checkLog(false);
             }
+
             log.add("End of program *******************");
-            checkLog(true);
+            checkLog(true); //One last write of the rest of the log data
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 

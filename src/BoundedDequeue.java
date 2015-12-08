@@ -48,7 +48,6 @@ public class BoundedDequeue<T> extends BoundedQueue {
                 mustWakeDequeuers = true;
             }
 
-//            log.add(printQueue());
         } catch (InterruptedException ie) {
             System.out.println("push(): Interrupted Exception");
         } finally {

@@ -35,17 +35,6 @@ public class BoundedQueue<T> {
         this.log = log;
     }
 
-    public String printQueue() {
-        Node node = head != null ? head : tail;
-        String returnString = " ";
-        while (node.next != null) {
-            returnString += node.value != null ? node.value : " ";
-            node = node.next;
-        }
-        return returnString;
-    }
-
-
     /**
      * Enqueue method to add element to tail of the queue
      *
@@ -72,7 +61,6 @@ public class BoundedQueue<T> {
                 mustWakeDequeuers = true;
             }
 
-//            log.add(printQueue());
         } catch (InterruptedException ie) {
             System.out.println("enq(): Interrupted Exception");
         } finally {
@@ -100,6 +88,7 @@ public class BoundedQueue<T> {
     public T deq() {
         T result = null;
         boolean mustWakeEnqueuers = false;
+
         //Obtail the deq lock
         deqLock.lock();
         try {
@@ -117,11 +106,11 @@ public class BoundedQueue<T> {
             //If we previously had a full queue then we need to alert the enquers
             if (size.getAndDecrement() == capacity) {
                 mustWakeEnqueuers = true;
-                // If there is anyone waiting for this then notifyThem
+
+                // If there is anyone waiting for this then notifyThem, do this now while we have the deq lock
                 if (deqLock.hasWaiters(pushNotFullCondition)) pushNotFullCondition.signalAll();
             }
 
-//            log.add(printQueue());
         } catch (InterruptedException ie) {
             System.out.println("enq(): Interrupted Exception");
         } finally {

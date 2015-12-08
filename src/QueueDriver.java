@@ -35,7 +35,6 @@ public class QueueDriver {
 
     static LinkedBlockingQueue<String> log;
     static Instant startTime;
-    static int testCounter = 0;
 
     /**
      * Configure our logger for the program
@@ -64,6 +63,21 @@ public class QueueDriver {
             queueSize = Integer.valueOf(System.getProperty("queueSize", "15"));
             maxTime = Integer.valueOf(System.getProperty("maxTime", "1"));
             dequeue = Boolean.valueOf(System.getProperty("dequeue", "true"));
+
+            System.out.println("System started with options: " +
+                    "\nNumber of Enq Threads: " +
+                    numberEnq +
+                    "\nNumber of Deq Threads: "
+                    + numberDeq +
+                    "\nNumber of Push Threads: "
+                    + numberPush
+                    + "\nQueue Size: "
+                    + queueSize +
+                    "\nMaxTime: "
+                    + maxTime +
+                    " mins" +
+                    "\nDequeue: "
+                    + dequeue);
 
         } catch (NumberFormatException e) {
             System.out.println("Please enter an integer formatted correctly");
@@ -111,7 +125,7 @@ public class QueueDriver {
 
             if (dequeue) {
                 //Create all the push threads
-                for (int i = 0; i < numberDeq; i++) {
+                for (int i = 0; i < numberPush; i++) {
                     Thread thread = new Thread(new PushThread(boundedDequeue, log));
                     thread.start();
                     runningThreads.add(thread);
@@ -123,12 +137,18 @@ public class QueueDriver {
                 //Spin while we wait for max time to be reached
             }
 
+            //Interrupt all running threads since they could wait indefinitely if not interrupted
+            for (Thread thread : runningThreads) {
+                thread.interrupt();
+            }
+
             // Tell all threads that time is up
             //Fine with interrupt because if they are waiting then they will be waiting forever anyways
             for (Thread thread : runningThreads) {
                 thread.interrupt();
             }
 
+            //Interrupt the fileIO thread as well
             fileIOThread.interrupt();
 
         } catch (Exception e) {

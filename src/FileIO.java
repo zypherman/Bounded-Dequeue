@@ -40,10 +40,10 @@ public class FileIO implements Runnable {
      * Will take all items from the log queue and send them to get written to disk
      */
     private void ingestLog() throws InterruptedException {
-        ArrayBlockingQueue<String> logs = new ArrayBlockingQueue<String>(50, true);
+        ArrayBlockingQueue<String> logs = new ArrayBlockingQueue<String>(100, true);
         int count = 0;
 
-        //While there are logs to read and we haven't read more than 20
+        //While there are logs to read and we haven't read more than 25
         while(!log.isEmpty() || count < 25) {
             if (consoleNoise && log.peek() != null) { System.out.println(log.peek()); }
             logs.add(log.take());

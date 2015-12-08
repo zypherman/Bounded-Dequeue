@@ -25,8 +25,7 @@ public class PushThread extends QueueThread {
 
                 Thread.sleep(randomService.getRandom());
             } catch (InterruptedException e) {
-                log.add("Thread " + Thread.currentThread().getName() +
-                        " died at time " + Instant.now().toString());
+                Thread.currentThread().interrupt();
             }
         }
 

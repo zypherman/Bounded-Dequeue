@@ -44,6 +44,7 @@ public class BoundedQueue<T> {
         boolean mustWakeDequeuers = false;
 
         //Gain the lock on the tail
+        //comment
         enqLock.lock();
         try {
             //Check if the queue is full before we add an element, if it is then we wait for the condition to be resolved
